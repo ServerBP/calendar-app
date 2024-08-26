@@ -102,19 +102,27 @@
     return { lesson: 'No current lesson', glowColor: 'grey' };
   }
 
+
   function toggleEditMode() {
+    if (editMode) {
+      saveSchedule();
+    }
     editMode = !editMode;
   }
 
+  function updateSchedule(day, index, value) {
+    if (currentWeek === 'A') {
+      weekA[day][index] = value;
+      weekAStore.set(weekA);
+    } else {
+      weekB[day][index] = value;
+      weekBStore.set(weekB);
+    }
+  }
+
   function saveSchedule() {
-    days.forEach(day => {
-      weekA[day] = document.getElementById(`weekA-${day}`).value.split(', ');
-      weekB[day] = document.getElementById(`weekB-${day}`).value.split(', ');
-    });
-    weekAStore.set(weekA);
-    weekBStore.set(weekB);
-    editMode = false;
-    location.reload(); // Refresh the page
+    localStorage.setItem('weekA', JSON.stringify(weekA));
+    localStorage.setItem('weekB', JSON.stringify(weekB));
   }
 
   function copyTimetable() {
@@ -192,7 +200,17 @@
             <tr>
               <td>{time}</td>
               {#each days as day}
-                <td>{currentSchedule[day][i]}</td>
+                <td>
+                  {#if editMode}
+                    <input 
+                      type="text" 
+                      value={currentSchedule[day][i]} 
+                      on:input={(e) => updateSchedule(day, i, e.target.value)}
+                    />
+                  {:else}
+                    {currentSchedule[day][i]}
+                  {/if}
+                </td>
               {/each}
             </tr>
           {/each}
@@ -202,30 +220,21 @@
   </div>
 
   <div class="button-container">
-    <button class="edit-button" on:click={toggleEditMode}><span class="material-symbols-outlined" style="margin-right: 0.6rem; font-size: 1.5rem;">save</span>Edit Calendar</button>
-    <button class="copy-button" on:click={copyTimetable}><span class="material-symbols-outlined" style="margin-right: 0.6rem; font-size: 1.5rem;">copy_all</span>Copy Timetable</button>
-    <button class="load-button" on:click={loadTimetable}><span class="material-symbols-outlined" style="margin-right: 0.6rem; font-size: 1.5rem;">download</span>Load Timetable</button>
+    <button class="edit-button" on:click={toggleEditMode}>
+      <span class="material-symbols-outlined">
+        {editMode ? 'save' : 'edit'}
+      </span>
+      {editMode ? 'Save' : 'Edit'} Calendar
+    </button>
+    <button class="copy-button" on:click={copyTimetable}>
+      <span class="material-symbols-outlined">copy_all</span>
+      Copy Timetable
+    </button>
+    <button class="load-button" on:click={loadTimetable}>
+      <span class="material-symbols-outlined">download</span>
+      Load Timetable
+    </button>
   </div>
-
-  {#if editMode}
-    <div class="edit-mode">
-      <h2>Edit Schedule</h2>
-      {#each ['A', 'B'] as week}
-        <h3>Week {week}</h3>
-        {#each days as day}
-          <div class="edit-day">
-            <label for="week{week}-{day}">{day}:</label>
-            <input 
-              type="text" 
-              id="week{week}-{day}" 
-              value={week === 'A' ? weekA[day].join(', ') : weekB[day].join(', ')}
-            >
-          </div>
-        {/each}
-      {/each}
-      <button on:click={saveSchedule}>Save</button>
-    </div>
-  {/if}
 </main>
 
 <style>
@@ -274,7 +283,7 @@
   }
 
   .sidebar {
-    width: 250px;
+    width: 300px;
     margin-right: 20px;
   }
 
@@ -392,5 +401,29 @@
   .edit-button span, .copy-button span, .load-button span {
     margin-right: 0.6rem;
     font-size: 1.5rem;
+  }
+
+  .timetable td {
+    position: relative;
+  }
+
+  .timetable td input {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: none;
+    background: transparent;
+    color: white;
+    text-align: center;
+    font-size: inherit;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .timetable td input:focus {
+    background-color: #2c3e50;
+    outline: none;
   }
 </style>
