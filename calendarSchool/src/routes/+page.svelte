@@ -4,19 +4,19 @@
 
   // Create stores for Week A and Week B schedules
   const weekAStore = writable(JSON.parse(localStorage.getItem('weekA')) || {
-    Monday: ['Math', 'English', 'Science', 'Break', 'History', 'Geography', 'Lunch', 'Art', 'Music'],
-    Tuesday: ['Physics', 'Chemistry', 'Biology', 'Break', 'Literature', 'French', 'Lunch', 'PE', 'Drama'],
-    Wednesday: ['Computer Science', 'Economics', 'Business', 'Break', 'Psychology', 'Sociology', 'Lunch', 'Ethics', 'Philosophy'],
-    Thursday: ['Math', 'English', 'Science', 'Break', 'History', 'Geography', 'Lunch', 'Art', 'Music'],
-    Friday: ['Physics', 'Chemistry', 'Biology', 'Break', 'Literature', 'French', 'Lunch', 'PE', 'Drama']
+    Monday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Tuesday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Wednesday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Thursday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Friday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time']
   });
 
   const weekBStore = writable(JSON.parse(localStorage.getItem('weekB')) || {
-    Monday: ['Literature', 'French', 'PE', 'Break', 'Drama', 'Art', 'Lunch', 'Music', 'Math'],
-    Tuesday: ['English', 'Science', 'History', 'Break', 'Geography', 'Computer Science', 'Lunch', 'Economics', 'Business'],
-    Wednesday: ['Psychology', 'Sociology', 'Ethics', 'Break', 'Philosophy', 'Physics', 'Lunch', 'Chemistry', 'Biology'],
-    Thursday: ['Literature', 'French', 'PE', 'Break', 'Drama', 'Art', 'Lunch', 'Music', 'Math'],
-    Friday: ['English', 'Science', 'History', 'Break', 'Geography', 'Computer Science', 'Lunch', 'Economics', 'Business']
+    Monday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Tuesday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Wednesday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Thursday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time'],
+    Friday: ['Homeroom', 'Lesson 1', 'Lesson 2', 'Break', 'Lesson 3', 'Lesson 4', 'Lunch', 'Lesson 5', 'Club Time']
   });
 
   let weekA, weekB;
