@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
+  import { tick } from 'svelte';
 
   // Create stores for Week A and Week B schedules
   const weekAStore = writable(JSON.parse(localStorage.getItem('weekA')) || {
@@ -43,6 +44,27 @@
   let currentLesson = '';
   let editMode = false;
 
+  let lessonProgressPercentage = 0;
+  let intervalId;
+
+  function updateTimeAndLessons() {
+    const upcoming = getUpcomingLesson();
+    upcomingLesson = upcoming.lesson;
+    const upcomingElement = document.getElementById('upcoming-lesson');
+    if (upcomingElement) {
+      upcomingElement.style.boxShadow = `0 0 15px ${upcoming.glowColor}`;
+    }
+
+    const current = getCurrentLesson();
+    currentLesson = current.lesson;
+    const currentElement = document.getElementById('current-lesson');
+    if (currentElement) {
+      currentElement.style.boxShadow = `0 0 15px ${current.glowColor}`;
+    }
+
+    updateLessonProgress();
+  }
+
   function switchWeek(week) {
     currentWeek = week;
     currentSchedule = week === 'A' ? weekA : weekB;
@@ -66,7 +88,7 @@
       if (time < start) {
         const minutesUntil = start - time;
         const glowColor = minutesUntil > 50 ? 'green' : 
-                          minutesUntil > 30 ? 'yellow' : 'red';
+                          minutesUntil > 15 ? 'yellow' : 'red';
         return {
           lesson: `${currentSchedule[days[day]][i]} (${lessonTimes[i]})`,
           glowColor
@@ -110,6 +132,10 @@
     editMode = !editMode;
   }
 
+  function toggleTodoComplete(todo) {
+    updateTodo(todo.id, { category: todo.category === 'Completed' ? 'To Do' : 'Completed' });
+  }
+
   function updateSchedule(day, index, value) {
     if (currentWeek === 'A') {
       weekA[day][index] = value;
@@ -147,25 +173,172 @@
     }
   }
 
+  // New code for to-do list
+  const todoStore = writable(JSON.parse(localStorage.getItem('todos')) || []);
+
+  let todos;
+  todoStore.subscribe(value => {
+    todos = value;
+    localStorage.setItem('todos', JSON.stringify(value));
+  });
+
+  function addTodo(category) {
+    const newTodo = {
+      id: Date.now(),
+      text: '',
+      category,
+      labels: []
+    };
+    todoStore.update(todos => [...todos, newTodo]);
+  }
+
+  function updateTodo(id, updates) {
+    todoStore.update(todos => 
+      todos.map(todo => todo.id === id ? { ...todo, ...updates } : todo)
+    );
+  }
+
+  function deleteTodo(id) {
+    todoStore.update(todos => todos.filter(todo => todo.id !== id));
+  }
+
+  function addLabel(todoId, label) {
+    todoStore.update(todos => 
+      todos.map(todo => 
+        todo.id === todoId 
+          ? { ...todo, labels: [...todo.labels, label] }
+          : todo
+      )
+    );
+  }
+
+  function removeLabel(todoId, label) {
+    todoStore.update(todos => 
+      todos.map(todo => 
+        todo.id === todoId 
+          ? { ...todo, labels: todo.labels.filter(l => l !== label) }
+          : todo
+      )
+    );
+  }
+
+  let draggedTodo = null;
+  let dragOverCategory = null;
+
+  function handleDragStart(todo) {
+    draggedTodo = todo;
+  }
+
+  function handleDragOver(category, e) {
+    e.preventDefault();
+    dragOverCategory = category;
+  }
+
+  function handleDrop(category) {
+    if (draggedTodo && draggedTodo.category !== category) {
+      updateTodo(draggedTodo.id, { category });
+    }
+    draggedTodo = null;
+    dragOverCategory = null;
+  }
+
+  function updateLessonProgress() {
+    const now = new Date();
+    const time = now.getHours() * 60 + now.getMinutes();
+
+    const currentLessonInfo = getCurrentLesson();
+    if (currentLessonInfo.lesson === 'No current lesson' || currentLessonInfo.lesson.includes('Break') || currentLessonInfo.lesson.includes('Lunch')) {
+      lessonProgressPercentage = 0;
+      return;
+    }
+
+    const [, lessonTime] = currentLessonInfo.lesson.split('(');
+    const [start, end] = lessonTime.slice(0, -1).split('-').map(t => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    });
+
+    const totalDuration = end - start;
+    const elapsed = time - start;
+    lessonProgressPercentage = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+  }
+
+  function autoResizeTextarea(node) {
+    function resize() {
+      node.style.height = 'auto';
+      node.style.height = node.scrollHeight + 'px';
+    }
+    
+    node.addEventListener('input', resize);
+    
+    return {
+      destroy() {
+        node.removeEventListener('input', resize);
+      }
+    };
+  }
+
+  async function handleTextareaInput(event, todo) {
+    updateTodo(todo.id, { text: event.target.value });
+    await tick();
+    event.target.style.height = 'auto';
+    event.target.style.height = event.target.scrollHeight + 'px';
+  }
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      startClock();
+    } else {
+      clearInterval(intervalId);
+    }
+  }
+
+  function startClock() {
+    clearInterval(intervalId); // Clear any existing interval
+    updateTimeAndLessons(); // Update immediately
+    intervalId = setInterval(updateTimeAndLessons, 60000); // Then update every minute
+  }
+
+  function handleFocus() {
+    startClock();
+  }
+
   onMount(() => {
     setInterval(() => {
       const upcoming = getUpcomingLesson();
       upcomingLesson = upcoming.lesson;
       document.getElementById('upcoming-lesson').style.boxShadow = `0 0 15px ${upcoming.glowColor}`;
-      
+
       const current = getCurrentLesson();
       currentLesson = current.lesson;
       document.getElementById('current-lesson').style.boxShadow = `0 0 15px ${current.glowColor}`;
+
+      updateLessonProgress();
     }, 60000); // Update every minute
     const upcoming = getUpcomingLesson();
     upcomingLesson = upcoming.lesson;
     document.getElementById('upcoming-lesson').style.boxShadow = `0 0 15px ${upcoming.glowColor}`;
-    
+
     const current = getCurrentLesson();
     currentLesson = current.lesson;
     document.getElementById('current-lesson').style.boxShadow = `0 0 15px ${current.glowColor}`;
+
+    updateLessonProgress();
+
+    startClock();
+
+    // Add event listeners for visibility change and focus
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   });
 </script>
+
 
 <main>
   <div class="week-selector">
@@ -182,6 +355,9 @@
       <div id="current-lesson" class="lesson-box">
         <h2>Current Lesson:</h2>
         <p>{currentLesson}</p>
+        <div class="progress-bar">
+          <div class="progress" style="width: {lessonProgressPercentage}%"></div>
+        </div>
       </div>
     </div>
 
@@ -234,6 +410,74 @@
       <span class="material-symbols-outlined">download</span>
       Load Timetable
     </button>
+  </div>
+
+  <div class="todo-container">
+    {#each ['To Do', 'In Progress', 'Completed'] as category}
+      <div 
+        class="todo-category"
+        on:dragover|preventDefault={(e) => handleDragOver(category, e)}
+        on:drop|preventDefault={() => handleDrop(category)}
+      >
+        <h3>
+          {category}
+          <span class="material-symbols-outlined">
+            {category === 'To Do' ? 'playlist_add' : category === 'In Progress' ? 'pending' : 'task_alt'}
+          </span>
+        </h3>
+        {#each todos.filter(todo => todo.category === category) as todo (todo.id)}
+          <div 
+            class="todo-item"
+            draggable="true"
+            on:dragstart={() => handleDragStart(todo)}
+          >
+            <div class="todo-content">
+              <button 
+                class="todo-checkbox" 
+                on:click={() => toggleTodoComplete(todo)}
+              >
+                <span class="material-symbols-outlined">
+                  {todo.category === 'Completed' ? 'check_box' : 'check_box_outline_blank'}
+                </span>
+              </button>
+              <textarea 
+                bind:value={todo.text} 
+                on:input={() => updateTodo(todo.id, { text: todo.text })}
+                placeholder="Enter task..."
+                rows="1"
+              ></textarea>
+            </div>
+            <div class="todo-actions">
+              <div class="todo-labels">
+                {#each todo.labels as label}
+                  <span class="todo-label">
+                    {label}
+                    <button on:click={() => removeLabel(todo.id, label)}>×</button>
+                  </span>
+                {/each}
+                <input 
+                  type="text" 
+                  placeholder="Add label" 
+                  on:keydown={(e) => {
+                    if (e.key === 'Enter' && e.target.value) {
+                      addLabel(todo.id, e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </div>
+              <button class="delete-todo" on:click={() => deleteTodo(todo.id)}>
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        {/each}
+        <button class="add-todo" on:click={() => addTodo(category)}>
+          <span class="material-symbols-outlined">add</span>
+          Add Task
+        </button>
+      </div>
+    {/each}
   </div>
 </main>
 
@@ -425,5 +669,163 @@
   .timetable td input:focus {
     background-color: #2c3e50;
     outline: none;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #1e1e1e;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .progress {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    transition: width 0.5s ease-in-out;
+  }
+
+  .todo-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .todo-category {
+    flex: 1;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 0 10px;
+    min-height: 300px;
+  }
+
+  .todo-category h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+
+  .todo-item {
+    background-color: #2c3e50;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    cursor: move;
+  }
+
+  .todo-content {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .todo-checkbox {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 10px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    flex-shrink: 0;
+  }
+
+  .todo-checkbox:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+
+  .todo-item textarea {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    resize: vertical;
+    min-height: 24px;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    overflow-y: hidden;
+  }
+
+  .todo-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .todo-labels {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    margin-right: 10px;
+  }
+
+  .todo-label {
+    background-color: #34495e;
+    color: white;
+    border-radius: 3px;
+    padding: 2px 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  .todo-label button {
+    background: none;
+    border: none;
+    color: white;
+    margin-left: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+
+  .todo-label button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+
+  .delete-todo {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    flex-shrink: 0;
+  }
+
+  .delete-todo:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+  }
+
+  .add-todo {
+    width: 100%;
+    padding: 10px;
+    background-color: #34495e;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+
+  .add-todo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  }
+
+  .add-todo span {
+    margin-right: 5px;
   }
 </style>
