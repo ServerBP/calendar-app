@@ -400,7 +400,7 @@
       <span class="material-symbols-outlined">
         {editMode ? 'save' : 'edit'}
       </span>
-      {editMode ? 'Save' : 'Edit'} Calendar
+      {editMode ? 'Save' : 'Edit'} Timetable
     </button>
     <button class="copy-button" on:click={copyTimetable}>
       <span class="material-symbols-outlined">copy_all</span>
