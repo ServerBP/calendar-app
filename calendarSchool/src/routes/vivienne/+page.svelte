@@ -4,31 +4,21 @@
     import { tick } from 'svelte';
   
     // Create stores for Week A and Week B schedules
-    const weekAStore = writable(JSON.parse(localStorage.getItem('weekA')) || {
-      Monday: ['Homeroom', 'Langauge Aquisition / EAL', 'Lang & Lit / EAL', 'Break', 'VA / English Composition', 'Music / Drama', 'Lunch', 'Math / I&S', 'Tutoring?'],
-      Tuesday: ['Homeroom', 'PHE', 'PHE', 'Break', 'PHE / VA', 'Music / Drama', 'Lunch', 'I&S / Math', '-'],
-      Wednesday: ['Homeroom', 'I&S / Math', 'Langauge Aquisition / EAL', 'Break', 'Science / Design', 'PSHE / Science', 'Lunch', 'Lang & Lit / EAL', 'Tutoring?'],
-      Thursday: ['Homeroom', 'Langauge Aquisition / EAL', 'English Composition / Science', 'Break', 'Science / I&S', 'Math / Service / EAL', 'Lunch', 'Design / Math', '- unless you come to chem club'],
-      Friday: ['Homeroom', 'English Composition / Science', 'Lang & Lit / EAL', 'Break', 'Design / I&S', 'Science / Design', 'Lunch', 'Math / PHE', '-']
-    });
+    const weekA = {
+      Monday: ['Homeroom', 'EAL', 'EAL', 'Break', 'English Composition', 'Drama', 'Lunch', 'I&S', 'Tutoring?'],
+      Tuesday: ['Homeroom', 'PHE', 'PHE', 'Break', 'VA', 'Drama', 'Lunch', 'Math', '-'],
+      Wednesday: ['Homeroom', 'Math', 'EAL', 'Break', 'Design', 'Science', 'Lunch', 'EAL', 'Tutoring?'],
+      Thursday: ['Homeroom', 'EAL', 'Science', 'Break', 'I&S', 'Service / EAL', 'Lunch', 'Math', '- unless you come to chem club'],
+      Friday: ['Homeroom', 'Science', 'EAL', 'Break', 'I&S', 'Design', 'Lunch', 'Math / PHE', '-']
+    };
   
-    const weekBStore = writable(JSON.parse(localStorage.getItem('weekB')) || {
-      Monday: ['Homeroom', 'I&S', 'Science / Design', 'Break', 'PHE / Science', 'Langauge Aquisition / EAL', 'Lunch', 'Lang & Lit / EAL', 'Tutoring?'],
-      Tuesday: ['Homeroom', 'PHE', 'PHE', 'Break', 'Math / VA', 'Science / Design', 'Lunch', 'I&S / PHE', '-'],
-      Wednesday: ['Homeroom', 'English Composition / Math', 'Design / English Composition', 'Break', 'Music / Drama', 'Math / Science', 'Lunch', 'VA / PSHE', 'Tutoring?'],
-      Thursday: ['Homeroom', 'Games', 'Games', 'Break', 'Music / Drama', 'Service / ATL / Maths', 'Lunch', 'I&S / English Composition', '- unless you come to chem club'],
-      Friday: ['Homeroom', 'Science / Math', 'Langauge Aquisition / EAL', 'Break', 'Math / I&S', 'Lang & Lit / EAL', 'Lunch', 'Design / Science', '-']
-    });
-  
-    let weekA, weekB;
-    weekAStore.subscribe(value => {
-      weekA = value;
-      localStorage.setItem('weekA', JSON.stringify(value));
-    });
-    weekBStore.subscribe(value => {
-      weekB = value;
-      localStorage.setItem('weekB', JSON.stringify(value));
-    });
+    const weekB = {
+      Monday: ['Homeroom', 'I&S', 'Design', 'Break', 'Science', 'EAL', 'Lunch', 'EAL', 'Tutoring?'],
+      Tuesday: ['Homeroom', 'PHE', 'PHE', 'Break', 'VA', 'Design', 'Lunch', 'PHE', '-'],
+      Wednesday: ['Homeroom', 'Math', 'English Composition', 'Break', 'Drama', 'Science', 'Lunch', 'PSHE', 'Tutoring?'],
+      Thursday: ['Homeroom', 'Games', 'Games', 'Break', 'Drama', 'Maths', 'Lunch', 'English Composition', '- unless you come to chem club'],
+      Friday: ['Homeroom', 'Math', 'EAL', 'Break', 'I&S', 'EAL', 'Lunch', 'Science', '-']
+    };
   
     let currentWeek = 'A';
     let currentSchedule = weekA;
