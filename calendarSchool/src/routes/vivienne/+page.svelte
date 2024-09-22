@@ -20,8 +20,8 @@
       Friday: ['Homeroom', 'Math', 'EAL', 'Break', 'I&S', 'EAL', 'Lunch', 'Science', '-']
     };
   
-    let currentWeek = 'B';
-    let currentSchedule = weekB;
+    let currentWeek = 'A';
+    let currentSchedule = weekA;
   
     const lessonTimes = [
       '8:30-8:50', '8:50-9:50', '9:50-10:50', '10:50-11:10',
